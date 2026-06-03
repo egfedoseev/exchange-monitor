@@ -63,6 +63,10 @@ src/main/kotlin/exchange/
 
 * **Стек:** Kotlin 1.9+, Gradle (Kotlin DSL).
 * Проект собирается стандартной командой:
+```shell
   ./gradlew build
+```
 * Запуск симулятора:
+```shell
   ./gradlew run
+```
