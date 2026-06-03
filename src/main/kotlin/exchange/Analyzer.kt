@@ -19,8 +19,8 @@ class ArbitrageAnalyzer(val currencyPair: CurrencyPair) {
 
         val opportunity = calculateArbitrage(ticker) ?: return
 
-        val sellTicker = latestPrices[opportunity.sellExchange] ?: return
         val buyTicker = latestPrices[opportunity.buyExchange] ?: return
+        val sellTicker = latestPrices[opportunity.sellExchange] ?: return
 
         val realProfit = sellTicker.bid - buyTicker.ask
 
@@ -35,9 +35,9 @@ class ArbitrageAnalyzer(val currencyPair: CurrencyPair) {
         val buyResult = buyWallet.executeTrade(
             TradeOrder(
                 Asset(currencyPair.second), Asset(currencyPair.first),
-                baseAmount, OrderType.BUY
+                baseAmount, buyTicker.ask, OrderType.BUY
             )
-        );
+        )
         val sellResult = when (buyResult) {
             is TradeResult.Failed -> return
             is TradeResult.Success -> {
@@ -46,7 +46,7 @@ class ArbitrageAnalyzer(val currencyPair: CurrencyPair) {
                 sellWallet.executeTrade(
                     TradeOrder(
                         Asset(currencyPair.first), Asset(currencyPair.second),
-                        amountToSell, OrderType.SELL
+                        amountToSell, sellTicker.bid, OrderType.SELL
                     )
                 )
             }

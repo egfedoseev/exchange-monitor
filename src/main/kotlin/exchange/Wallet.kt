@@ -21,6 +21,7 @@ data class TradeOrder(
     val asset: Asset,
     val quoteAsset: Asset,
     val amount: BigDecimal,
+    val targetPrice: BigDecimal,
     val type: OrderType
 )
 
@@ -42,16 +43,40 @@ class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
     override suspend fun getBalance(asset: Asset): BigDecimal = balances.getOrDefault(asset, BigDecimal.ZERO)
 
     override suspend fun executeTrade(order: TradeOrder): TradeResult {
-        var (asset, quoteAsset, amount, type) = order
-        if (type == OrderType.SELL) {
-            val tmp = asset
-            asset = quoteAsset
-            quoteAsset = tmp
+        val spentAsset: Asset
+        val receivedAsset: Asset
+        val spentAmount: BigDecimal
+        val receivedAmount: BigDecimal
+
+        when (order.type) {
+            OrderType.BUY -> {
+                spentAsset = order.quoteAsset
+                receivedAsset = order.asset
+                spentAmount = order.amount.multiply(order.targetPrice)
+                receivedAmount = order.amount
+            }
+
+            OrderType.SELL -> {
+                spentAsset = order.asset
+                receivedAsset = order.quoteAsset
+                spentAmount = order.amount
+                receivedAmount = order.amount.multiply(order.targetPrice)
+            }
         }
+
+        val currentSpentBalance = getBalance(spentAsset)
+
+        if (currentSpentBalance < spentAmount) {
+            return TradeResult.Failed("Недостаточно средств в ассете ${spentAsset.code}")
+        }
+
+        balances[spentAsset] = currentSpentBalance.subtract(spentAmount)
+        balances[receivedAsset] = getBalance(receivedAsset).add(receivedAmount)
 
         return TradeResult.Success(
             transactionId = "sim-tx-${System.nanoTime()}",
-            actualPrice = BigDecimal.valueOf(65000)
+            actualPrice = order.targetPrice,
+            actualAmount = order.amount
         )
     }
 }
