@@ -1,6 +1,7 @@
 package ru.jinushi.exchange
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.math.BigDecimal
@@ -21,17 +22,19 @@ data class Ticker(
 )
 
 sealed interface Exchange {
+    val name: String
+
     fun getFlow(currencyPair: CurrencyPair): Flow<Ticker>
 }
 
-class ArbitrageOpportunity(val buyExchange: Exchange, val sellExchange: Exchange, val profit: BigDecimal)
-
 fun main() {
     runBlocking {
-        launch { TestExchange.updateTicker() }
+        val exchanges = listOf(TestExchange("Binance-Sim"), TestExchange("Bybit-Sim"))
+        exchanges.forEach { launch { it.updateTicker() } }
+        val currencyPair = CurrencyPair("USD/BTC")
+        val exchangesFlow = exchanges.map { it.getFlow(currencyPair) }.merge()
         launch {
-            val flow = TestExchange.getFlow(CurrencyPair("USD/BTC"))
-            flow.collect { ticker -> println(ticker) }
+            exchangesFlow.collect(ArbitrageAnalyzer::processNewTicker)
         }
     }
 }

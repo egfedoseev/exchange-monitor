@@ -5,24 +5,18 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.math.BigDecimal
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
-object TestExchange : Exchange {
+class TestExchange(override val name: String) : Exchange {
     private val random = Random.Default
-    private var bid = BigDecimal.TEN
-
     private val multiplier = BigDecimal.valueOf(1.1)
-
     private val bidState = MutableStateFlow(BigDecimal.TEN)
-
-    private val wallets = ConcurrentHashMap<String, Wallet>()
 
     override fun getFlow(currencyPair: CurrencyPair): Flow<Ticker> = bidState.map { currentBid ->
         Ticker(
-            exchange = TestExchange,
+            exchange = this,
             currencyPair = currencyPair,
             bid = currentBid,
             ask = currentBid.multiply(multiplier),
@@ -37,4 +31,6 @@ object TestExchange : Exchange {
             delay(1000.milliseconds)
         }
     }
+
+    override fun toString(): String = name
 }
