@@ -9,7 +9,7 @@ import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
-class TestExchange(override val name: String, override val wallet: Wallet) : Exchange {
+class VirtualExchange(override val name: String, override val wallet: Wallet) : Exchange {
     private val random = Random.Default
     private val multiplier = BigDecimal.valueOf(1.1)
     private val bidState = MutableStateFlow(BigDecimal.TEN)

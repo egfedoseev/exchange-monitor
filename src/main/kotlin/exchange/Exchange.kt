@@ -32,13 +32,23 @@ sealed interface Exchange {
 fun main() {
     runBlocking {
         val exchanges = listOf(
-            TestExchange(
+            VirtualExchange(
                 "Binance-Sim",
-                VirtualWallet(mapOf(Pair(Asset("USD"), BigDecimal.TEN)))
+                VirtualWallet(
+                    mapOf(
+                        Pair(Asset("USD"), BigDecimal.TEN),
+                        Pair(Asset("BTC"), BigDecimal.TEN)
+                    )
+                )
             ),
-            TestExchange(
+            VirtualExchange(
                 "Bybit-Sim",
-                VirtualWallet(mapOf(Pair(Asset("USD"), BigDecimal.TEN)))
+                VirtualWallet(
+                    mapOf(
+                        Pair(Asset("USD"), BigDecimal.TEN),
+                        Pair(Asset("BTC"), BigDecimal.TEN)
+                    )
+                )
             )
         )
         exchanges.forEach { launch { it.updateTicker() } }

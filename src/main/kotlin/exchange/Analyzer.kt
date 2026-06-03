@@ -12,7 +12,7 @@ class ArbitrageAnalyzer(val currencyPair: CurrencyPair) {
     private val latestPrices = ConcurrentHashMap<Exchange, Ticker>()
     private var totalProfit = AtomicReference(BigDecimal.ZERO)
 
-    private val baseAmount = BigDecimal.ONE
+    private val baseAmount = BigDecimal.valueOf(0.001)
 
     suspend fun processNewTicker(ticker: Ticker) {
         latestPrices[ticker.exchange] = ticker
