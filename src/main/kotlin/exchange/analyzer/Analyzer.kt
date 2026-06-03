@@ -1,9 +1,10 @@
-package ru.jinushi.exchange
+package ru.jinushi.exchange.analyzer
 
 import kotlinx.coroutines.channels.Channel
+import ru.jinushi.exchange.Exchange
+import ru.jinushi.exchange.Ticker
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.component1
 import kotlin.collections.component2
 

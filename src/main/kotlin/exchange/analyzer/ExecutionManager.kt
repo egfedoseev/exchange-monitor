@@ -1,9 +1,13 @@
-package ru.jinushi.exchange
+package ru.jinushi.exchange.analyzer
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import ru.jinushi.exchange.wallet.Asset
+import ru.jinushi.exchange.wallet.OrderType
+import ru.jinushi.exchange.wallet.TradeOrder
+import ru.jinushi.exchange.wallet.TradeResult
 import java.math.BigDecimal
 import java.util.concurrent.atomic.AtomicReference
 

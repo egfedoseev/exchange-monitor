@@ -1,6 +1,7 @@
 package ru.jinushi.exchange
 
 import kotlinx.coroutines.flow.Flow
+import ru.jinushi.exchange.wallet.Wallet
 
 object Binance : Exchange {
     override val name: String

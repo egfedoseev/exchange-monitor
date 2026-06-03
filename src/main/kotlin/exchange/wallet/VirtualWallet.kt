@@ -1,4 +1,4 @@
-package ru.jinushi.exchange
+package ru.jinushi.exchange.wallet
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

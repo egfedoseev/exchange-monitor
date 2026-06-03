@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import kotlin.random.Random
 import kotlin.time.Clock

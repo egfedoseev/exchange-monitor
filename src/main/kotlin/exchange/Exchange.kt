@@ -10,6 +10,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
+import ru.jinushi.exchange.analyzer.ExecutionManager
+import ru.jinushi.exchange.analyzer.TradeEvent
+import ru.jinushi.exchange.wallet.Asset
+import ru.jinushi.exchange.wallet.VirtualWallet
+import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import kotlin.time.Instant
 
