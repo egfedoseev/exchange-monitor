@@ -10,9 +10,9 @@ import kotlin.time.Instant
 @JvmInline
 value class CurrencyPair(val raw: String) {
     val first: String
-        get() = raw.split("/")[0]
+        get() = raw.substringBefore("/")
     val second: String
-        get() = raw.split("/")[1]
+        get() = raw.substringAfter("/")
 }
 
 data class Ticker(
@@ -24,20 +24,29 @@ data class Ticker(
 sealed interface Exchange {
     val name: String
 
+    val wallet: Wallet
+
     fun getFlow(currencyPair: CurrencyPair): Flow<Ticker>
 }
 
 fun main() {
     runBlocking {
-        val exchanges = listOf(TestExchange("Binance-Sim"), TestExchange("Bybit-Sim"))
+        val exchanges = listOf(
+            TestExchange(
+                "Binance-Sim",
+                VirtualWallet(mapOf(Pair(Asset("USD"), BigDecimal.TEN)))
+            ),
+            TestExchange(
+                "Bybit-Sim",
+                VirtualWallet(mapOf(Pair(Asset("USD"), BigDecimal.TEN)))
+            )
+        )
         exchanges.forEach { launch { it.updateTicker() } }
         val currencyPair = CurrencyPair("USD/BTC")
+        val analyzer = ArbitrageAnalyzer(currencyPair)
         val exchangesFlow = exchanges.map { it.getFlow(currencyPair) }.merge()
         launch {
-            exchangesFlow.collect(ArbitrageAnalyzer::processNewTicker)
+            exchangesFlow.collect(analyzer::processNewTicker)
         }
     }
 }
-
-
-
