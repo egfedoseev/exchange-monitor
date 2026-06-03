@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.util.concurrent.atomic.AtomicReference
 
 class ExecutionManager(
     private val commandChannel: Channel<TradeEvent.OpportunityFound>
@@ -12,6 +13,8 @@ class ExecutionManager(
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val baseAmount = BigDecimal.valueOf(0.001)
+
+    private val totalProfit = AtomicReference(BigDecimal.ZERO)
 
     fun startWorkers(workersCount: Int) {
         repeat(workersCount) { workerId ->
@@ -58,9 +61,13 @@ class ExecutionManager(
         }
         if (sellResult is TradeResult.Success) {
             println(
-                "Successful trade, profit ${
-                    sellResult.actualAmount * sellResult.actualPrice
-                            - buyResult.actualAmount * buyResult.actualPrice
+                "Successful trade, total profit ${
+                    totalProfit.updateAndGet { prev ->
+                        prev.add(
+                            sellResult.actualAmount.multiply(sellResult.actualPrice)
+                                .subtract(buyResult.actualAmount.multiply(buyResult.actualPrice))
+                        )
+                    }
                 }"
             )
         }
