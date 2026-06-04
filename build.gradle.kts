@@ -1,7 +1,9 @@
 plugins {
+    val ktorVersion = "3.5.0"
+
     kotlin("jvm") version "2.3.21"
 
-    id("io.ktor.plugin") version "3.5.0"
+    id("io.ktor.plugin") version ktorVersion
 
     kotlin("plugin.serialization") version "2.1.0"
 }
@@ -14,6 +16,8 @@ repositories {
 }
 
 dependencies {
+    val ktorVersion = "3.5.0"
+
     testImplementation(kotlin("test"))
 
     implementation(kotlin("stdlib-jdk8"))
@@ -33,12 +37,11 @@ dependencies {
 
     implementation("io.ktor:ktor-client-core")
 
-    // 2. Асинхронный движок для клиента (выбираем знакомый CIO на корутинах)
     implementation("io.ktor:ktor-client-cio")
 
-    // 3. Плагины для клиента (чтобы клиент автоматически конвертировал JSON в DTO)
     implementation("io.ktor:ktor-client-content-negotiation")
-    implementation("io.ktor:ktor-serialization-kotlinx-json")
+    implementation("io.ktor:ktor-client-websockets")
+    implementation(platform("io.ktor:ktor-bom:$ktorVersion"))
 }
 
 tasks.test {

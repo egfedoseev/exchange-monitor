@@ -1,5 +1,10 @@
 package ru.jinushi.exchange
 
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.merge
@@ -11,6 +16,13 @@ import ru.jinushi.exchange.analyzer.TradeEvent
 import ru.jinushi.exchange.wallet.Asset
 import ru.jinushi.exchange.wallet.VirtualWallet
 import java.math.BigDecimal
+
+val httpClient = HttpClient(CIO) {
+    install(ContentNegotiation) {
+        json()
+    }
+    install(WebSockets)
+}
 
 fun main() {
     val commandChannel = Channel<TradeEvent.OpportunityFound>(

@@ -1,29 +1,9 @@
 package ru.jinushi.exchange
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
-import ru.jinushi.exchange.analyzer.ExecutionManager
-import ru.jinushi.exchange.analyzer.TradeEvent
-import ru.jinushi.exchange.wallet.Asset
-import ru.jinushi.exchange.wallet.VirtualWallet
 import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import kotlin.time.Instant
-
-val httpClient = HttpClient(CIO) {
-    install(ContentNegotiation) {
-        json()
-    }
-}
 
 @JvmInline
 value class CurrencyPair(val raw: String) {
