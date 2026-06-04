@@ -1,4 +1,4 @@
-package ru.jinushi.exchange
+package ru.jinushi.exchange.virtual
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import ru.jinushi.exchange.CurrencyPair
+import ru.jinushi.exchange.Exchange
+import ru.jinushi.exchange.Ticker
 import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import kotlin.random.Random

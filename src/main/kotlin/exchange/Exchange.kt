@@ -19,7 +19,7 @@ data class Ticker(
     val timestamp: Instant
 )
 
-sealed interface Exchange {
+interface Exchange {
     val name: String
 
     val wallet: Wallet

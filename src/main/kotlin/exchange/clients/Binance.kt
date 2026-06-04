@@ -1,9 +1,15 @@
-package ru.jinushi.exchange
+package ru.jinushi.exchange.clients
 
-import io.ktor.client.plugins.websocket.*
-import io.ktor.websocket.*
+import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import ru.jinushi.exchange.CurrencyPair
+import ru.jinushi.exchange.Exchange
+import ru.jinushi.exchange.Ticker
+import ru.jinushi.exchange.httpClient
 import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import kotlin.time.Clock
@@ -25,7 +31,7 @@ class Binance(override val wallet: Wallet) : Exchange {
                             val jsonText = frame.readText()
                             val ticker = parseBinanceJson(jsonText, currencyPair)
 
-                            send(ticker)
+                            SendChannel.send(ticker)
                         }
 
                         else -> { // ping pong

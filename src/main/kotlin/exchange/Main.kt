@@ -13,8 +13,9 @@ import kotlinx.coroutines.runBlocking
 import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
 import ru.jinushi.exchange.analyzer.ExecutionManager
 import ru.jinushi.exchange.analyzer.TradeEvent
+import ru.jinushi.exchange.virtual.VirtualExchange
 import ru.jinushi.exchange.wallet.Asset
-import ru.jinushi.exchange.wallet.VirtualWallet
+import ru.jinushi.exchange.virtual.VirtualWallet
 import java.math.BigDecimal
 
 val httpClient = HttpClient(CIO) {
