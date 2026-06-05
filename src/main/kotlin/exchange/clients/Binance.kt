@@ -1,21 +1,15 @@
 package ru.jinushi.exchange.clients
 
 import io.ktor.client.*
-import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import ru.jinushi.exchange.CurrencyPair
-import ru.jinushi.exchange.Exchange
 import ru.jinushi.exchange.Ticker
 import java.math.BigDecimal
 import kotlin.random.Random
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
 class Binance(client: HttpClient) : AbstractExchangeClient(client) {
