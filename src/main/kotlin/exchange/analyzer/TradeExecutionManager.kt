@@ -4,16 +4,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import ru.jinushi.exchange.wallet.Asset
 import ru.jinushi.exchange.wallet.OrderType
 import ru.jinushi.exchange.wallet.TradeOrder
 import ru.jinushi.exchange.wallet.TradeResult
 import java.math.BigDecimal
 import java.util.concurrent.atomic.AtomicReference
 
-class ExecutionManager(
-    private val commandChannel: Channel<TradeEvent.OpportunityFound>
-) {
+class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.OpportunityFound>) {
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val baseAmount = BigDecimal.valueOf(0.001)
@@ -38,15 +35,11 @@ class ExecutionManager(
     }
 
     private suspend fun executeTradeSafely(event: TradeEvent.OpportunityFound) {
-        val buyWallet = event.opportunity.buyExchange.wallet
-        val sellWallet = event.opportunity.sellExchange.wallet
-        val buyTicker = event.buyTicker
-        val sellTicker = event.sellTicker
-        val currencyPair = buyTicker.currencyPair
+        val (currencyPair, buyTicker, sellTicker, buyWallet, sellWallet) = event
 
         val buyResult = buyWallet.executeTrade(
             TradeOrder(
-                Asset(currencyPair.second), Asset(currencyPair.first),
+                currencyPair.baseAsset, currencyPair.quoteAsset,
                 baseAmount, buyTicker.ask, OrderType.BUY
             )
         )
@@ -57,7 +50,7 @@ class ExecutionManager(
 
                 sellWallet.executeTrade(
                     TradeOrder(
-                        Asset(currencyPair.first), Asset(currencyPair.second),
+                        currencyPair.baseAsset, currencyPair.quoteAsset,
                         amountToSell, sellTicker.bid, OrderType.SELL
                     )
                 )

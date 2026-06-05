@@ -1,8 +1,10 @@
 package ru.jinushi.exchange.analyzer
 
 import kotlinx.coroutines.channels.Channel
+import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.Exchange
 import ru.jinushi.exchange.Ticker
+import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.component1
@@ -11,9 +13,12 @@ import kotlin.collections.component2
 class ArbitrageOpportunity(val buyExchange: Exchange, val sellExchange: Exchange, val profit: BigDecimal)
 
 class ArbitrageAnalyzer(
-    private val commandChannel: Channel<TradeEvent.OpportunityFound>
+    val currencyPair: CurrencyPair,
+    private val commandChannel: Channel<TradeEvent.OpportunityFound>,
+    wallets: Map<Exchange, Wallet>
 ) {
     private val latestPrices = ConcurrentHashMap<Exchange, Ticker>()
+    private val wallets = ConcurrentHashMap(wallets)
 
     fun processNewTicker(ticker: Ticker) {
         latestPrices[ticker.exchange] = ticker
@@ -30,8 +35,11 @@ class ArbitrageAnalyzer(
             return
         }
 
+        val buyWallet = wallets[buyTicker.exchange] ?: return
+        val sellWallet = wallets[sellTicker.exchange] ?: return
+
         commandChannel.trySend(
-            TradeEvent.OpportunityFound(opportunity, buyTicker, sellTicker)
+            TradeEvent.OpportunityFound(currencyPair, buyTicker, sellTicker, buyWallet, sellWallet)
         )
     }
 

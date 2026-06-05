@@ -48,15 +48,6 @@ class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
         val firstLock = assetLocks.computeIfAbsent(firstAsset) { Mutex() }
         val secondLock = assetLocks.computeIfAbsent(secondAsset) { Mutex() }
 
-        val currentSpentBalance = getBalance(spentAsset)
-
-        if (currentSpentBalance < spentAmount) {
-            return TradeResult.Failed("Not enough money in asset $spentAsset")
-        }
-
-        balances[spentAsset] = currentSpentBalance.subtract(spentAmount)
-        balances[receivedAsset] = getBalance(receivedAsset).add(receivedAmount)
-
         return firstLock.withLock {
             secondLock.withLock {
                 val currentSpentBalance = getBalance(spentAsset)
@@ -66,7 +57,9 @@ class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
                 }
 
                 balances[spentAsset] = currentSpentBalance.subtract(spentAmount)
-                balances[receivedAsset] = getBalance(receivedAsset).add(receivedAmount)
+                balances.compute(receivedAsset) { _: Asset, oldValue: BigDecimal? ->
+                    oldValue?.add(receivedAmount) ?: receivedAmount
+                }
 
                 TradeResult.Success(
                     transactionId = "sim-tx-${System.nanoTime()}",
