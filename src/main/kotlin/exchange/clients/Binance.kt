@@ -1,57 +1,67 @@
 package ru.jinushi.exchange.clients
 
-import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.websocket.Frame
-import io.ktor.websocket.readText
-import kotlinx.coroutines.channels.SendChannel
+import io.ktor.client.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.Exchange
 import ru.jinushi.exchange.Ticker
-import ru.jinushi.exchange.httpClient
-import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
+import kotlin.random.Random
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 
-class Binance(override val wallet: Wallet) : Exchange {
-    override val name: String
-        get() = "Binance"
+class Binance(client: HttpClient) : AbstractExchangeClient(client) {
 
-    override fun getFlow(currencyPair: CurrencyPair): Flow<Ticker> = channelFlow {
-        val formattedPair = (currencyPair.second + currencyPair.first).lowercase()
-        val url = "wss://stream.binance.com:9443/ws/$formattedPair@ticker"
-        try {
-            httpClient.webSocket(urlString = url) {
-                println("[$name] Успешно подключились к WebSocket-стриму для $formattedPair")
+    override val name: String = "Binance"
 
-                for (frame in incoming) {
-                    when (frame) {
-                        is Frame.Text -> {
-                            val jsonText = frame.readText()
-                            val ticker = parseBinanceJson(jsonText, currencyPair)
+    override val streamUrl: String
+        get() = "wss://stream.binance.com:9443/ws"
 
-                            SendChannel.send(ticker)
-                        }
-
-                        else -> { // ping pong
-                        }
-                    }
-                }
+    override suspend fun WebSocketSession.subscribe(subscriptionEvent: String) {
+        val text = """
+            {
+                "method": "SUBSCRIBE",
+                "params": [
+                    "${subscriptionEvent.lowercase()}@bookTicker"
+                ],
+                "id": ${Random.nextInt()}
             }
-        } catch (e: Exception) {
-            println("[$name] Ошибка сокета: ${e.message}")
-            // TODO reconnect
-        }
+        """.trimIndent()
+        send(Frame.Text(text))
     }
 
-    private fun parseBinanceJson(json: String, currencyPair: CurrencyPair): Ticker { // TODO json deserialization
-        return Ticker(
-            exchange = this,
-            currencyPair = currencyPair,
-            bid = BigDecimal("65000"),
-            ask = BigDecimal("65050"),
+    override suspend fun WebSocketSession.ping() {
+        delay(Long.MAX_VALUE.milliseconds)
+    }
+
+    private val jsonParser = Json { ignoreUnknownKeys = true }
+
+    override fun parseTickerAndSymbol(jsonText: String): ParsedTicker? {
+        if (!jsonText.contains("\"b\"")) {
+            return null
+        }
+        val parsed = jsonParser.decodeFromString<BinanceBookTickerDto>(jsonText)
+        val ticker = Ticker(
+            exchange = this@Binance,
+            bid = BigDecimal(parsed.bestBid),
+            ask = BigDecimal(parsed.bestAsk),
             timestamp = Clock.System.now()
         )
+        return ParsedTicker(ticker, parsed.symbol)
     }
 }
+
+@Serializable
+data class BinanceBookTickerDto(
+    @SerialName("s") val symbol: String,
+    @SerialName("b") val bestBid: String,
+    @SerialName("a") val bestAsk: String
+)

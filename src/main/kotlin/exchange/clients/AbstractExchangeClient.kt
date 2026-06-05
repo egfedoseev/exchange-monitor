@@ -60,8 +60,8 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
 
             for (frame in incoming) {
                 if (frame is Frame.Text) {
-                    val parsed = parseTickerAndSymbol(frame.readText()) ?: continue
-                    flowChannels[parsed.symbol.uppercase()]?.tryEmit(parsed.ticker)
+                    val (ticker, symbol) = parseTickerAndSymbol(frame.readText()) ?: continue
+                    flowChannels[symbol.uppercase()]?.tryEmit(ticker)
                 }
             }
         }
@@ -106,4 +106,6 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
 
         return sharedFlow
     }
+
+    override fun toString(): String = name
 }
