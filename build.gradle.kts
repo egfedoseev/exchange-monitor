@@ -8,6 +8,10 @@ plugins {
     kotlin("plugin.serialization") version "2.1.0"
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 group = "ru.jinushi"
 version = "1.0-SNAPSHOT"
 

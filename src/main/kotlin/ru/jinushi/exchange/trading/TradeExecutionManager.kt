@@ -1,36 +1,45 @@
 package ru.jinushi.exchange.trading
 
+import io.ktor.util.logging.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import ru.jinushi.exchange.accounting.ExecutedTrade
 import ru.jinushi.exchange.accounting.ProfitTracker
 import ru.jinushi.exchange.analyzer.TradeEvent
 import java.math.BigDecimal
 
 class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.OpportunityFound>) {
+    private val logger: Logger = LoggerFactory.getLogger(TradeExecutionManager::class.java)
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val baseAmount = BigDecimal.valueOf(0.001)
 
     fun startWorkers(workersCount: Int) {
-        repeat(workersCount) { _ ->
+        repeat(workersCount) { id ->
             scope.launch {
                 for (event in commandChannel) {
                     try {
                         executeTradeSafely(event)
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        logger.error("Worker-$id encountered an error while executing trade: {}", e.message, e)
                     }
                 }
             }
         }
 
-        println("Successfully started workers: $workersCount")
+        logger.info("Successfully started {} workers", workersCount)
     }
 
     private suspend fun executeTradeSafely(event: TradeEvent.OpportunityFound) {
         val (currencyPair, buyTicker, sellTicker, buyWallet, sellWallet) = event
+
+        logger.info(
+            "Executing arbitrage trade for pair {}. Buying on {}, selling on {}",
+            currencyPair, buyTicker.exchange, sellTicker.exchange
+        )
 
         val buyResult = buyWallet.executeTrade(
             TradeOrder(
@@ -39,7 +48,11 @@ class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.Oppor
             )
         )
         val sellResult = when (buyResult) {
-            is TradeResult.Failed -> return
+            is TradeResult.Failed -> {
+                logger.warn("Leg 1 (BUY) failed: {}", buyResult.reason)
+                return
+            }
+
             is TradeResult.Success -> {
                 val amountToSell = buyResult.actualAmount
 
@@ -51,16 +64,29 @@ class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.Oppor
                 )
             }
         }
-        if (sellResult is TradeResult.Success) {
-            val executedTrade = ExecutedTrade(
-                currencyPair = currencyPair,
-                buyAmount = buyResult.actualAmount,
-                buyPrice = buyResult.actualPrice,
-                sellAmount = sellResult.actualAmount,
-                sellPrice = sellResult.actualPrice
-            )
-            ProfitTracker.registerTrade(executedTrade)
-            println("Successful trade, total profit ${ProfitTracker.getProfit(currencyPair.quoteAsset)}")
+
+        when (sellResult) {
+            is TradeResult.Failed -> {
+                logger.error(
+                    "CRITICAL: Leg 1 (BUY) succeeded (amount: {}), but Leg 2 (SELL) FAILED: {}. Wallet balances are out of sync!",
+                    buyResult.actualAmount, sellResult.reason
+                )
+            }
+
+            is TradeResult.Success -> {
+                val executedTrade = ExecutedTrade(
+                    currencyPair = currencyPair,
+                    buyAmount = buyResult.actualAmount,
+                    buyPrice = buyResult.actualPrice,
+                    sellAmount = sellResult.actualAmount,
+                    sellPrice = sellResult.actualPrice
+                )
+                ProfitTracker.registerTrade(executedTrade)
+                logger.info(
+                    "Successful trade! Total profit in {}: {}",
+                    currencyPair.quoteAsset, ProfitTracker.getProfit(currencyPair.quoteAsset)
+                )
+            }
         }
     }
 }

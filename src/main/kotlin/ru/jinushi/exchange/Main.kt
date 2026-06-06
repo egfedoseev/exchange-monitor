@@ -52,8 +52,8 @@ fun main() {
         commandChannel,
         mapOf(Pair(exchanges[0], binanceWallet), Pair(exchanges[1], bybitWallet))
     )
-    val exchangesFlow = exchanges.map { it.getFlow(currencyPair) }.merge()
     runBlocking {
+        val exchangesFlow = exchanges.map { it.getFlow(currencyPair) }.merge()
         launch {
             exchangesFlow.collect(analyzer::processNewTicker)
         }

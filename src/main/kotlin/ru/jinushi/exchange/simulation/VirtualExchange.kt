@@ -21,7 +21,7 @@ class VirtualExchange(override val name: String) : Exchange {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
 
-    override fun getFlow(currencyPair: CurrencyPair): Flow<Ticker> = bidState.map { currentBid ->
+    override suspend fun getFlow(currencyPair: CurrencyPair): Flow<Ticker> = bidState.map { currentBid ->
         Ticker(
             exchange = this,
             bid = currentBid,

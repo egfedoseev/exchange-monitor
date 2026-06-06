@@ -25,5 +25,5 @@ data class Ticker(
 interface Exchange {
     val name: String
 
-    fun getFlow(currencyPair: CurrencyPair): Flow<Ticker>
+    suspend fun getFlow(currencyPair: CurrencyPair): Flow<Ticker>
 }

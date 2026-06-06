@@ -2,6 +2,7 @@ package ru.jinushi.exchange.clients
 
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.util.logging.Logger
 import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import org.slf4j.LoggerFactory
 import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.Exchange
 import ru.jinushi.exchange.Ticker
@@ -25,6 +28,8 @@ data class ParsedTicker(
 )
 
 abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange {
+    protected val logger: Logger = LoggerFactory.getLogger(this::class.java)
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val subscriptionChannel = Channel<String>(
         capacity = 10,
@@ -43,12 +48,25 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
 
     private suspend fun runWebSocket() {
         client.webSocket(streamUrl) {
-            println("[$name] Successfully connected to websocket") // TODO add normal logging
+            logger.info("Successfully connected to websocket")
             connected = true
+
+            for (symbol in flowChannels.keys) {
+                try {
+                    subscribe(symbol)
+                    logger.info("Re-subscribed to {}", symbol)
+                } catch (e: Exception) {
+                    logger.error("Failed to re-subscribe to {}: {}", symbol, e.message)
+                }
+            }
 
             launch {
                 for (subscriptionEvent in subscriptionChannel) {
-                    subscribe(subscriptionEvent)
+                    try {
+                        subscribe(subscriptionEvent)
+                    } catch (e: Exception) {
+                        logger.error("Failed to subscribe to {}: {}", subscriptionEvent, e.message)
+                    }
                 }
             }
 
@@ -72,7 +90,7 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
             try {
                 runWebSocket()
             } catch (e: Exception) {
-                println("[$name] Connection lost or failed: ${e.message}. Reconnecting in 5s...") // TODO normal logging
+                logger.error("Connection lost or failed: {}. Reconnecting in 5s...", e.message)
             } finally {
                 connected = false
             }
@@ -83,7 +101,9 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
     @Volatile
     private var connected = false
 
-    override fun getFlow(currencyPair: CurrencyPair): Flow<Ticker> {
+    private val mutex = Mutex()
+
+    override suspend fun getFlow(currencyPair: CurrencyPair): Flow<Ticker> {
         val symbol = currencyPair.merged.uppercase()
 
         val sharedFlow = flowChannels.computeIfAbsent(symbol) {
@@ -97,11 +117,11 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
         }
 
         if (!connected) {
-            synchronized(this) {
-                if (!connected) {
-                    scope.launch { connectToServer() }
-                }
+            mutex.lock()
+            if (!connected) {
+                scope.launch { connectToServer() }
             }
+            mutex.unlock()
         }
 
         return sharedFlow
