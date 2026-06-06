@@ -8,29 +8,24 @@ import ru.jinushi.exchange.wallet.OrderType
 import ru.jinushi.exchange.wallet.TradeOrder
 import ru.jinushi.exchange.wallet.TradeResult
 import java.math.BigDecimal
-import java.util.concurrent.atomic.AtomicReference
 
 class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.OpportunityFound>) {
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val baseAmount = BigDecimal.valueOf(0.001)
 
-    private val totalProfit = AtomicReference(BigDecimal.ZERO)
-
     fun startWorkers(workersCount: Int) {
-        repeat(workersCount) { workerId ->
+        repeat(workersCount) { _ ->
             scope.launch {
                 for (event in commandChannel) {
-                    println("[Worker #$workerId] caught signal, initiating trade...")
-
                     try {
                         executeTradeSafely(event)
-                    } catch (e: Exception) {
-                        println("[Worker #$workerId] Exception: ${e.message}")
+                    } catch (_: Exception) {
                     }
                 }
             }
         }
+
         println("Successfully started workers: $workersCount")
     }
 
@@ -57,16 +52,15 @@ class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.Oppor
             }
         }
         if (sellResult is TradeResult.Success) {
-            println(
-                "Successful trade, total profit ${
-                    totalProfit.updateAndGet { prev ->
-                        prev.add(
-                            sellResult.actualAmount.multiply(sellResult.actualPrice)
-                                .subtract(buyResult.actualAmount.multiply(buyResult.actualPrice))
-                        )
-                    }
-                }"
+            val executedTrade = ExecutedTrade(
+                currencyPair = currencyPair,
+                buyAmount = buyResult.actualAmount,
+                buyPrice = buyResult.actualPrice,
+                sellAmount = sellResult.actualAmount,
+                sellPrice = sellResult.actualPrice
             )
+            ProfitTracker.registerTrade(executedTrade)
+            println("Successful trade, total profit ${ProfitTracker.getProfit(currencyPair.quoteAsset)}")
         }
     }
 }
