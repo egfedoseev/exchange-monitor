@@ -40,6 +40,7 @@ dependencies {
     implementation("io.ktor:ktor-server-swagger")
 
     testImplementation("io.ktor:ktor-server-test-host")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 
     implementation("io.ktor:ktor-client-core")
 
