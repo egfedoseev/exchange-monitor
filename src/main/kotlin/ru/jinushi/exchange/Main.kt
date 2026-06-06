@@ -7,9 +7,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
 import ru.jinushi.exchange.analyzer.TradeEvent
-import ru.jinushi.exchange.analyzer.TradeExecutionManager
-import ru.jinushi.exchange.virtual.VirtualExchange
-import ru.jinushi.exchange.virtual.VirtualWallet
+import ru.jinushi.exchange.trading.TradeExecutionManager
+import ru.jinushi.exchange.simulation.VirtualExchange
+import ru.jinushi.exchange.simulation.VirtualWallet
 import ru.jinushi.exchange.wallet.Asset
 import java.math.BigDecimal
 import kotlin.collections.mapOf

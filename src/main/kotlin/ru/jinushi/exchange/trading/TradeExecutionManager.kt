@@ -1,12 +1,12 @@
-package ru.jinushi.exchange.analyzer
+package ru.jinushi.exchange.trading
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import ru.jinushi.exchange.wallet.OrderType
-import ru.jinushi.exchange.wallet.TradeOrder
-import ru.jinushi.exchange.wallet.TradeResult
+import ru.jinushi.exchange.accounting.ExecutedTrade
+import ru.jinushi.exchange.accounting.ProfitTracker
+import ru.jinushi.exchange.analyzer.TradeEvent
 import java.math.BigDecimal
 
 class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.OpportunityFound>) {

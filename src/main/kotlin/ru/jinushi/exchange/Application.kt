@@ -10,7 +10,7 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import ru.jinushi.exchange.analyzer.TradeEvent
-import ru.jinushi.exchange.analyzer.TradeExecutionManager
+import ru.jinushi.exchange.trading.TradeExecutionManager
 import ru.jinushi.exchange.routes.analyzerRoutes
 import ru.jinushi.exchange.routes.exchangesRoutes
 import ru.jinushi.exchange.routes.tradeRoutes

@@ -22,7 +22,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
-import ru.jinushi.exchange.analyzer.ProfitTracker
+import ru.jinushi.exchange.accounting.ProfitTracker
 import ru.jinushi.exchange.analyzer.TradeEvent
 import ru.jinushi.exchange.serializers.BigDecimalSerializer
 import java.util.concurrent.ConcurrentHashMap

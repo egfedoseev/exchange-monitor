@@ -1,11 +1,11 @@
-package ru.jinushi.exchange.virtual
+package ru.jinushi.exchange.simulation
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ru.jinushi.exchange.wallet.Asset
-import ru.jinushi.exchange.wallet.OrderType
-import ru.jinushi.exchange.wallet.TradeOrder
-import ru.jinushi.exchange.wallet.TradeResult
+import ru.jinushi.exchange.trading.OrderType
+import ru.jinushi.exchange.trading.TradeOrder
+import ru.jinushi.exchange.trading.TradeResult
 import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap

@@ -1,4 +1,4 @@
-package ru.jinushi.exchange.virtual
+package ru.jinushi.exchange.simulation
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow

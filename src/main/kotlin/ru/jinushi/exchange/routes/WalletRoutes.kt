@@ -9,7 +9,7 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import ru.jinushi.exchange.serializers.BigDecimalSerializer
-import ru.jinushi.exchange.virtual.VirtualWallet
+import ru.jinushi.exchange.simulation.VirtualWallet
 import ru.jinushi.exchange.wallet.Asset
 import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal

@@ -1,4 +1,4 @@
-package ru.jinushi.exchange.analyzer
+package ru.jinushi.exchange.accounting
 
 import org.slf4j.LoggerFactory
 import ru.jinushi.exchange.CurrencyPair

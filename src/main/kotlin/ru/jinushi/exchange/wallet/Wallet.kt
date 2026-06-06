@@ -7,6 +7,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import ru.jinushi.exchange.trading.TradeOrder
+import ru.jinushi.exchange.trading.TradeResult
 import java.math.BigDecimal
 
 @Serializable(with = AssetSerializer::class)
@@ -31,24 +33,3 @@ interface Wallet {
     suspend fun executeTrade(order: TradeOrder): TradeResult
     suspend fun getBalances(): Map<Asset, BigDecimal>
 }
-
-data class TradeOrder(
-    val asset: Asset,
-    val quoteAsset: Asset,
-    val amount: BigDecimal,
-    val targetPrice: BigDecimal,
-    val type: OrderType
-)
-
-enum class OrderType { BUY, SELL }
-
-sealed interface TradeResult {
-    data class Success(
-        val transactionId: String,
-        val actualPrice: BigDecimal,
-        val actualAmount: BigDecimal
-    ) : TradeResult
-
-    data class Failed(val reason: String) : TradeResult
-}
-
