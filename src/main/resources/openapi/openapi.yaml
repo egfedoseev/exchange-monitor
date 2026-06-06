@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: Crypto Arbitrage Bot Core API
+  description: REST API for managing a high-throughput, asynchronous crypto arbitrage trading bot built with Kotlin and Ktor.
+  version: 1.0.0
+paths:
+  /wallets:
+    get:
+      summary: Get all wallet balances
+      description: Returns current asset balances aggregated across all connected exchanges.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    type: string
+                    example: "1050.45"
+    post:
+      summary: Register a new wallet
+      description: Connects a custodial/non-custodial wallet to an exchange. Allows pre-funding for virtual simulators.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletName
+                - isVirtual
+              properties:
+                walletName:
+                  type: string
+                  example: "BinanceWallet"
+                isVirtual:
+                  type: boolean
+                  example: true
+                initialBalances:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example: { "USDT": "10000", "BTC": "0.5" }
+      responses:
+        '201':
+          description: Wallet successfully registered
+
+  /exchanges:
+    get:
+      summary: List all active exchanges
+      description: Retrieves a list of active transport clients (e.g., Binance, Bybit) and their operational modes.
+      responses:
+        '200':
+          description: A list of exchanges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "Binance"
+                    type:
+                      type: string
+                      example: "VIRTUAL"
+
+  /analyzers:
+    get:
+      summary: List running analyzers
+      description: Returns a list of currency pairs currently being tracked by market data streaming coroutines.
+      responses:
+        '200':
+          description: A list of active currency pairs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: "BTC/USDT"
+    post:
+      summary: Start analyzer for a currency pair
+      description: Dynamically provisions hot SharedFlow multiplexers and spins up reactive WebSocket stream listeners.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currencyPair
+              properties:
+                currencyPair:
+                  type: string
+                  example: "BTC/USDT"
+      responses:
+        '200':
+          description: Analyzer successfully started and streaming market data
+
+  /analyzers/{pair}:
+    delete:
+      summary: Stop analyzer and disconnect streams
+      description: Gracefully cancels dedicated coroutine scopes for the specified pair and halts order execution listeners.
+      parameters:
+        - name: pair
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "BTC-USDT"
+      responses:
+        '200':
+          description: Analyzer safely terminated and coroutine scopes cancelled
+
+  /analyzers/profit:
+    get:
+      summary: Get total profit metrics
+      description: Retrieves the atomic, thread-safe counter representing net PnL accumulated by execution workers.
+      responses:
+        '200':
+          description: Current profit data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalProfitUsd:
+                    type: string
+                    example: "154.23"
+
+  /trades:
+    get:
+      summary: Get execution trade history
+      description: Fetches a historic log of completed arbitrage loops with calculated execution slippage and clean yields.
+      responses:
+        '200':
+          description: Audit log of executed trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "sim-tx-1715423456"
+                    pair:
+                      type: string
+                      example: "BTC/USDT"
+                    buyExchange:
+                      type: string
+                      example: "Binance"
+                    sellExchange:
+                      type: string
+                      example: "Bybit"
+                    amount:
+                      type: string
+                      example: "0.05"
+                    profit:
+                      type: string
+                      example: "12.45"
+                    timestamp:
+                      type: string
+                      example: "2026-06-05T18:50:23Z"
