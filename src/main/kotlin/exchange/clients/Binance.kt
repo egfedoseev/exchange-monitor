@@ -10,7 +10,7 @@ import ru.jinushi.exchange.Ticker
 import java.math.BigDecimal
 import kotlin.random.Random
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration
 
 class Binance(client: HttpClient) : AbstractExchangeClient(client) {
 
@@ -26,14 +26,14 @@ class Binance(client: HttpClient) : AbstractExchangeClient(client) {
                 "params": [
                     "${subscriptionEvent.lowercase()}@bookTicker"
                 ],
-                "id": ${Random.nextInt()}
+                "id": ${Random.nextInt(1, Int.MAX_VALUE)}
             }
         """.trimIndent()
         send(Frame.Text(text))
     }
 
     override suspend fun WebSocketSession.ping() {
-        delay(Long.MAX_VALUE.milliseconds)
+        delay(Duration.INFINITE)
     }
 
     private val jsonParser = Json { ignoreUnknownKeys = true }
@@ -54,7 +54,7 @@ class Binance(client: HttpClient) : AbstractExchangeClient(client) {
 }
 
 @Serializable
-data class BinanceBookTickerDto(
+private data class BinanceBookTickerDto(
     @SerialName("s") val symbol: String,
     @SerialName("b") val bestBid: String,
     @SerialName("a") val bestAsk: String

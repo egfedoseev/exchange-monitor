@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
     private val balances = ConcurrentHashMap(initialBalances)
+    override suspend fun getBalances(): Map<Asset, BigDecimal> = balances
 
     private val assetLocks = ConcurrentHashMap<Asset, Mutex>()
 

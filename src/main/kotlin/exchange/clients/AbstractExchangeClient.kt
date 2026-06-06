@@ -43,7 +43,7 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
 
     private suspend fun runWebSocket() {
         client.webSocket(streamUrl) {
-            println("[$name] Successfully connected to websocket")
+            println("[$name] Successfully connected to websocket") // TODO add normal logging
             connected = true
 
             launch {
@@ -72,7 +72,7 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
             try {
                 runWebSocket()
             } catch (e: Exception) {
-                println("[$name] Connection lost or failed: ${e.message}. Reconnecting in 5s...")
+                println("[$name] Connection lost or failed: ${e.message}. Reconnecting in 5s...") // TODO normal logging
             } finally {
                 connected = false
             }

@@ -5,6 +5,7 @@ import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.Exchange
 import ru.jinushi.exchange.Ticker
 import ru.jinushi.exchange.wallet.Wallet
+import java.io.Closeable
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.component1
@@ -16,7 +17,7 @@ class ArbitrageAnalyzer(
     val currencyPair: CurrencyPair,
     private val commandChannel: Channel<TradeEvent.OpportunityFound>,
     wallets: Map<Exchange, Wallet>
-) {
+) : Closeable {
     private val latestPrices = ConcurrentHashMap<Exchange, Ticker>()
     private val wallets = ConcurrentHashMap(wallets)
 
@@ -31,7 +32,6 @@ class ArbitrageAnalyzer(
         val realProfit = sellTicker.bid - buyTicker.ask
 
         if (realProfit <= BigDecimal.ZERO) {
-            println("Trade cancelled")
             return
         }
 
@@ -65,4 +65,8 @@ class ArbitrageAnalyzer(
                     }
                 }
             }.maxByOrNull { it.profit }
+
+    override fun close() {
+
+    }
 }

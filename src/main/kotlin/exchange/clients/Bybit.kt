@@ -48,12 +48,12 @@ class Bybit(client: HttpClient) : AbstractExchangeClient(client) {
 }
 
 @Serializable
-data class BybitBookTickerDto(
+private data class BybitBookTickerDto(
     @SerialName("data") val data: BybitTickerDataDto
 )
 
 @Serializable
-data class BybitTickerDataDto(
+private data class BybitTickerDataDto(
     @SerialName("symbol") val symbol: String,
     @SerialName("bid1Price") val bestBid: String,
     @SerialName("ask1Price") val bestAsk: String
