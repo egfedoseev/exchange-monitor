@@ -22,7 +22,8 @@ fun main() {
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    val executionManager = TradeExecutionManager(commandChannel)
+    val executionManager =
+        TradeExecutionManager(commandChannel)
     executionManager.startWorkers(10)
 
     embeddedServer(CIO, port = 8080) {

@@ -12,6 +12,7 @@ import ru.jinushi.exchange.virtual.VirtualExchange
 import ru.jinushi.exchange.virtual.VirtualWallet
 import ru.jinushi.exchange.wallet.Asset
 import java.math.BigDecimal
+import kotlin.collections.mapOf
 
 fun main() {
     val commandChannel = Channel<TradeEvent.OpportunityFound>(
@@ -19,7 +20,8 @@ fun main() {
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    val executionManager = TradeExecutionManager(commandChannel)
+    val executionManager =
+        TradeExecutionManager(commandChannel)
     executionManager.startWorkers(workersCount = 10)
 
     val binanceWallet = VirtualWallet(
