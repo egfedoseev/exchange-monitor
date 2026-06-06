@@ -36,7 +36,7 @@ class WalletRegistry {
 }
 
 class AnalyzerRegistry : Closeable {
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val analyzers = ConcurrentHashMap<CurrencyPair, ArbitrageAnalyzer>()
     private val activeJobs = ConcurrentHashMap<CurrencyPair, Job>()
 

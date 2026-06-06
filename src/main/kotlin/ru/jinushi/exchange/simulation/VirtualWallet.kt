@@ -8,6 +8,7 @@ import ru.jinushi.exchange.trading.TradeOrder
 import ru.jinushi.exchange.trading.TradeResult
 import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.concurrent.ConcurrentHashMap
 
 class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
@@ -28,15 +29,15 @@ class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
             OrderType.BUY -> {
                 spentAsset = order.quoteAsset
                 receivedAsset = order.asset
-                spentAmount = order.amount.multiply(order.targetPrice)
-                receivedAmount = order.amount
+                spentAmount = order.amount.multiply(order.targetPrice).roundForAsset(spentAsset)
+                receivedAmount = order.amount.roundForAsset(receivedAsset)
             }
 
             OrderType.SELL -> {
                 spentAsset = order.asset
                 receivedAsset = order.quoteAsset
-                spentAmount = order.amount
-                receivedAmount = order.amount.multiply(order.targetPrice)
+                spentAmount = order.amount.roundForAsset(spentAsset)
+                receivedAmount = order.amount.multiply(order.targetPrice).roundForAsset(receivedAsset)
             }
         }
 
@@ -52,14 +53,14 @@ class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
         return firstLock.withLock {
             secondLock.withLock {
                 val currentSpentBalance = getBalance(spentAsset)
-
                 if (currentSpentBalance < spentAmount) {
-                    return TradeResult.Failed("Not enough money in asset ${spentAsset.code}")
+                    return TradeResult.Failed("Not enough money in asset ${spentAsset.code}. Has $currentSpentBalance, needs $spentAmount")
                 }
 
                 balances[spentAsset] = currentSpentBalance.subtract(spentAmount)
                 balances.compute(receivedAsset) { _: Asset, oldValue: BigDecimal? ->
-                    oldValue?.add(receivedAmount) ?: receivedAmount
+                    val newVal = oldValue?.add(receivedAmount) ?: receivedAmount
+                    newVal.roundForAsset(receivedAsset)
                 }
 
                 TradeResult.Success(
@@ -69,5 +70,10 @@ class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
                 )
             }
         }
+    }
+
+    private fun BigDecimal.roundForAsset(asset: Asset): BigDecimal {
+        val scale = if (asset.code.uppercase() == "USD" || asset.code.uppercase() == "USDT") 2 else 8
+        return this.setScale(scale, RoundingMode.HALF_UP)
     }
 }

@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.wallet.Asset
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -33,4 +34,5 @@ data class ExecutedTrade(
 ) {
     val netProfit: BigDecimal
         get() = (sellAmount.multiply(sellPrice)).subtract(buyAmount.multiply(buyPrice))
+            .setScale(8, RoundingMode.HALF_UP)
 }

@@ -26,6 +26,7 @@ import ru.jinushi.exchange.registry.AnalyzerRegistry
 import ru.jinushi.exchange.analyzer.TradeEvent
 import ru.jinushi.exchange.trading.TradeExecutionManager
 import java.math.BigDecimal
+import kotlin.time.Duration.Companion.seconds
 
 fun main() {
     val commandChannel = Channel<TradeEvent.OpportunityFound>(
@@ -37,7 +38,9 @@ fun main() {
     executionManager.startWorkers(10)
 
     val httpClient = HttpClient(io.ktor.client.engine.cio.CIO) {
-        install(WebSockets)
+        install(WebSockets) {
+            pingInterval = 20.seconds
+        }
     }
 
     val exchangeRegistry = ExchangeRegistry()
@@ -74,6 +77,11 @@ fun main() {
     embeddedServer(CIO, port = 8080) {
         install(ContentNegotiation) {
             json()
+        }
+
+        monitor.subscribe(ApplicationStopping) {
+            analyzerRegistry.close()
+            httpClient.close()
         }
 
         routing {

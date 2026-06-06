@@ -12,6 +12,10 @@ import kotlin.test.assertTrue
 
 class VirtualWalletTest {
 
+    private fun assertBigDecimalEquals(expected: BigDecimal, actual: BigDecimal, message: String = "") {
+        assertEquals(0, expected.compareTo(actual), "$message. Expected: $expected, but got: $actual")
+    }
+
     @Test
     fun testInitialBalances() = runTest {
         val btc = Asset("BTC")
@@ -23,9 +27,9 @@ class VirtualWalletTest {
             )
         )
 
-        assertEquals(BigDecimal("1.5"), wallet.getBalance(btc))
-        assertEquals(BigDecimal("1000"), wallet.getBalance(usd))
-        assertEquals(BigDecimal.ZERO, wallet.getBalance(Asset("EUR")))
+        assertBigDecimalEquals(BigDecimal("1.5"), wallet.getBalance(btc))
+        assertBigDecimalEquals(BigDecimal("1000"), wallet.getBalance(usd))
+        assertBigDecimalEquals(BigDecimal.ZERO, wallet.getBalance(Asset("EUR")))
     }
 
     @Test
@@ -49,13 +53,13 @@ class VirtualWalletTest {
         )
 
         val result = wallet.executeTrade(order)
-        assertTrue(result is TradeResult.Success)
-        assertEquals(BigDecimal("1500"), result.actualPrice)
-        assertEquals(BigDecimal("0.5"), result.actualAmount)
+        assertTrue(result is TradeResult.Success, (result as? TradeResult.Failed)?.reason ?: "")
+        assertBigDecimalEquals(BigDecimal("1500"), result.actualPrice)
+        assertBigDecimalEquals(BigDecimal("0.5"), result.actualAmount)
 
         // Balances updated
-        assertEquals(BigDecimal("0.5"), wallet.getBalance(btc))
-        assertEquals(BigDecimal("250").stripTrailingZeros(), wallet.getBalance(usd).stripTrailingZeros())
+        assertBigDecimalEquals(BigDecimal("0.5"), wallet.getBalance(btc))
+        assertBigDecimalEquals(BigDecimal("250"), wallet.getBalance(usd))
     }
 
     @Test
@@ -79,11 +83,13 @@ class VirtualWalletTest {
         )
 
         val result = wallet.executeTrade(order)
-        assertTrue(result is TradeResult.Success)
+        assertTrue(result is TradeResult.Success, (result as? TradeResult.Failed)?.reason ?: "")
+        assertBigDecimalEquals(BigDecimal("2000"), result.actualPrice)
+        assertBigDecimalEquals(BigDecimal("1.5"), result.actualAmount)
 
         // Balances updated
-        assertEquals(BigDecimal("0.5"), wallet.getBalance(btc))
-        assertEquals(BigDecimal("3000").stripTrailingZeros(), wallet.getBalance(usd).stripTrailingZeros())
+        assertBigDecimalEquals(BigDecimal("0.5"), wallet.getBalance(btc))
+        assertBigDecimalEquals(BigDecimal("3000"), wallet.getBalance(usd))
     }
 
     @Test
@@ -120,7 +126,7 @@ class VirtualWalletTest {
         assertTrue(sellResult is TradeResult.Failed)
 
         // Balances should remain unchanged
-        assertEquals(BigDecimal("0.1"), wallet.getBalance(btc))
-        assertEquals(BigDecimal("100"), wallet.getBalance(usd))
+        assertBigDecimalEquals(BigDecimal("0.1"), wallet.getBalance(btc))
+        assertBigDecimalEquals(BigDecimal("100"), wallet.getBalance(usd))
     }
 }

@@ -1,28 +1,21 @@
 package ru.jinushi.exchange.routes
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.request.requirePathParameter
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.route
-import io.ktor.server.util.getOrFail
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.server.util.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UseSerializers
 import ru.jinushi.exchange.CurrencyPair
-import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
 import ru.jinushi.exchange.accounting.ProfitTracker
+import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
 import ru.jinushi.exchange.analyzer.TradeEvent
 import ru.jinushi.exchange.registry.AnalyzerRegistry
 import ru.jinushi.exchange.registry.ExchangeRegistry
 import ru.jinushi.exchange.registry.WalletRegistry
-import ru.jinushi.exchange.serializers.BigDecimalSerializer
 
 fun Route.analyzerRoutes(
     commandChannel: Channel<TradeEvent.OpportunityFound>,
