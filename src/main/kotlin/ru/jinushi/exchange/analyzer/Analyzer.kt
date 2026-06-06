@@ -19,7 +19,7 @@ class ArbitrageAnalyzer(
     wallets: Map<Exchange, Wallet>
 ) : Closeable {
     private val latestPrices = ConcurrentHashMap<Exchange, Ticker>()
-    private val wallets = ConcurrentHashMap(wallets)
+    val wallets = ConcurrentHashMap(wallets)
 
     fun processNewTicker(ticker: Ticker) {
         latestPrices[ticker.exchange] = ticker

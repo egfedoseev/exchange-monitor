@@ -13,6 +13,7 @@ import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.accounting.ProfitTracker
 import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
 import ru.jinushi.exchange.analyzer.TradeEvent
+import ru.jinushi.exchange.config.ConfigManager
 import ru.jinushi.exchange.registry.AnalyzerRegistry
 import ru.jinushi.exchange.registry.ExchangeRegistry
 import ru.jinushi.exchange.registry.WalletRegistry
@@ -21,7 +22,8 @@ fun Route.analyzerRoutes(
     commandChannel: Channel<TradeEvent.OpportunityFound>,
     analyzerRegistry: AnalyzerRegistry,
     exchangeRegistry: ExchangeRegistry,
-    walletRegistry: WalletRegistry
+    walletRegistry: WalletRegistry,
+    configManager: ConfigManager
 ) {
     val currencyPairRegex = Regex("^[A-Z0-9]{2,5}/[A-Z0-9]{2,5}$")
     route("/analyzers") {
@@ -60,6 +62,7 @@ fun Route.analyzerRoutes(
                 flows.merge().collect(analyzer::processNewTicker)
             }
             analyzerRegistry.register(currencyPair, analyzer, job)
+            configManager.saveCurrentState()
 
             call.respond(HttpStatusCode.OK, "Started analyzer")
         }
@@ -76,6 +79,7 @@ fun Route.analyzerRoutes(
                     "No such analyzer for pair $pairToDelete"
                 )
             }
+            configManager.saveCurrentState()
 
             call.respond(HttpStatusCode.OK, "Stopped analyzer for pair $pairToDelete")
         }

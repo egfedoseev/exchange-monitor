@@ -38,6 +38,7 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging")
     implementation("io.ktor:ktor-server-status-pages")
     implementation("io.ktor:ktor-server-swagger")
+    implementation("com.akuleshov7:ktoml-core:0.5.1")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")

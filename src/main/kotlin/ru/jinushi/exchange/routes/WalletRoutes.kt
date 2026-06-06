@@ -8,13 +8,14 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
+import ru.jinushi.exchange.config.ConfigManager
 import ru.jinushi.exchange.registry.WalletRegistry
 import ru.jinushi.exchange.serializers.BigDecimalSerializer
 import ru.jinushi.exchange.simulation.VirtualWallet
 import ru.jinushi.exchange.wallet.Asset
 import java.math.BigDecimal
 
-fun Route.walletRoutes(walletRegistry: WalletRegistry) {
+fun Route.walletRoutes(walletRegistry: WalletRegistry, configManager: ConfigManager) {
     route("/wallets") {
         get {
             call.respond(walletRegistry.getAll().mapValues { (_, wallet) -> wallet.getBalances() })
@@ -31,6 +32,7 @@ fun Route.walletRoutes(walletRegistry: WalletRegistry) {
                 .mapValues { (_, value) -> BigDecimal(value) }
             val wallet = VirtualWallet(initialBalances)
             walletRegistry.register(dto.walletName, wallet)
+            configManager.saveCurrentState()
             call.respond(HttpStatusCode.fromValue(201), "Wallet registered")
         }
     }

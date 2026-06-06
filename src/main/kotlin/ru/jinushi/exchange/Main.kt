@@ -38,12 +38,8 @@ fun main() {
     )
 
     val exchanges = listOf(
-        VirtualExchange(
-            "Binance-Sim"
-        ),
-        VirtualExchange(
-            "Bybit-Sim"
-        )
+        VirtualExchange("Binance-Sim"),
+        VirtualExchange("Bybit-Sim")
     )
     exchanges.forEach { it.updateTicker() }
     val currencyPair = CurrencyPair("USD/BTC")
