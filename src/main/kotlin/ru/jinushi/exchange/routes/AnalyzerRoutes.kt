@@ -1,5 +1,3 @@
-@file:UseSerializers(BigDecimalSerializer::class)
-
 package ru.jinushi.exchange.routes
 
 import io.ktor.http.HttpStatusCode
@@ -12,9 +10,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.util.getOrFail
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
@@ -24,20 +19,21 @@ import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.analyzer.ArbitrageAnalyzer
 import ru.jinushi.exchange.accounting.ProfitTracker
 import ru.jinushi.exchange.analyzer.TradeEvent
+import ru.jinushi.exchange.registry.AnalyzerRegistry
+import ru.jinushi.exchange.registry.ExchangeRegistry
+import ru.jinushi.exchange.registry.WalletRegistry
 import ru.jinushi.exchange.serializers.BigDecimalSerializer
-import java.util.concurrent.ConcurrentHashMap
 
-private val mutableAnalyzers = ConcurrentHashMap<CurrencyPair, ArbitrageAnalyzer>()
-val analyzers: Map<CurrencyPair, ArbitrageAnalyzer> = mutableAnalyzers
-
-private val scope = CoroutineScope(Dispatchers.IO)
-private val jobMap = ConcurrentHashMap<CurrencyPair, Job>()
-
-fun Route.analyzerRoutes(commandChannel: Channel<TradeEvent.OpportunityFound>) {
+fun Route.analyzerRoutes(
+    commandChannel: Channel<TradeEvent.OpportunityFound>,
+    analyzerRegistry: AnalyzerRegistry,
+    exchangeRegistry: ExchangeRegistry,
+    walletRegistry: WalletRegistry
+) {
     val currencyPairRegex = Regex("^[A-Z0-9]{2,5}/[A-Z0-9]{2,5}$")
     route("/analyzers") {
         get {
-            call.respond(HttpStatusCode.OK, analyzers.keys)
+            call.respond(HttpStatusCode.OK, analyzerRegistry.getAll().keys)
         }
 
         post {
@@ -48,29 +44,29 @@ fun Route.analyzerRoutes(commandChannel: Channel<TradeEvent.OpportunityFound>) {
             }
             val currencyPair = CurrencyPair(request.currencyPair)
 
-            if (analyzers.containsKey(currencyPair)) {
+            if (analyzerRegistry.contains(currencyPair)) {
                 return@post call.respond(HttpStatusCode.OK, "Analyzer for $currencyPair had already started")
             }
 
             val exchangesMap = request.executionMappings
                 .mapKeys { (exchangeName, _) ->
-                    exchanges[exchangeName] ?: return@post call.respond(
+                    exchangeRegistry.get(exchangeName) ?: return@post call.respond(
                         HttpStatusCode.BadRequest, "No such exchange: $exchangeName"
                     )
                 }
                 .mapValues { (_, walletName) ->
-                    wallets[walletName] ?: return@post call.respond(
+                    walletRegistry.get(walletName) ?: return@post call.respond(
                         HttpStatusCode.BadRequest,
                         "No such wallet: $walletName"
                     )
                 }
             val analyzer = ArbitrageAnalyzer(currencyPair, commandChannel, exchangesMap)
-            mutableAnalyzers[currencyPair] = analyzer
 
-            val mergedFlow = exchangesMap.keys.map { it.getFlow(currencyPair) }.merge()
-            jobMap[currencyPair] = scope.launch {
-                mergedFlow.collect(analyzer::processNewTicker)
+            val job = analyzerRegistry.scope.launch {
+                val flows = exchangesMap.keys.map { it.getFlow(currencyPair) }
+                flows.merge().collect(analyzer::processNewTicker)
             }
+            analyzerRegistry.register(currencyPair, analyzer, job)
 
             call.respond(HttpStatusCode.OK, "Started analyzer")
         }
@@ -78,13 +74,15 @@ fun Route.analyzerRoutes(commandChannel: Channel<TradeEvent.OpportunityFound>) {
         delete("/{pair}") {
             call.requirePathParameter("pair")
             val pairToDelete = call.parameters.getOrFail("pair")
+            val currencyPair = CurrencyPair(pairToDelete)
 
-            jobMap[CurrencyPair(pairToDelete)]?.cancel() ?: return@delete call.respond(
-                HttpStatusCode.BadRequest,
-                "No such analyzer for pair $pairToDelete"
-            )
-
-            mutableAnalyzers.remove(CurrencyPair(pairToDelete))
+            val stopped = analyzerRegistry.stop(currencyPair)
+            if (!stopped) {
+                return@delete call.respond(
+                    HttpStatusCode.BadRequest,
+                    "No such analyzer for pair $pairToDelete"
+                )
+            }
 
             call.respond(HttpStatusCode.OK, "Stopped analyzer for pair $pairToDelete")
         }

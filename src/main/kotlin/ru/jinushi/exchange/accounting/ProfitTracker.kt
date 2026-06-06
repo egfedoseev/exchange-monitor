@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-private val logger = LoggerFactory.getLogger("Application")
+private val logger = LoggerFactory.getLogger("Trades")
 
 object ProfitTracker {
     private val profitByAsset = ConcurrentHashMap<Asset, BigDecimal>()

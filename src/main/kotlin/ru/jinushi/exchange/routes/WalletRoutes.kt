@@ -8,20 +8,16 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
+import ru.jinushi.exchange.registry.WalletRegistry
 import ru.jinushi.exchange.serializers.BigDecimalSerializer
 import ru.jinushi.exchange.simulation.VirtualWallet
 import ru.jinushi.exchange.wallet.Asset
-import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
-import java.util.concurrent.ConcurrentHashMap
 
-private val mutableWallets = ConcurrentHashMap<String, Wallet>()
-val wallets: Map<String, Wallet> = mutableWallets
-
-fun Route.walletRoutes() {
+fun Route.walletRoutes(walletRegistry: WalletRegistry) {
     route("/wallets") {
         get {
-            call.respond(wallets.mapValues { (_, wallet) -> wallet.getBalances() })
+            call.respond(walletRegistry.getAll().mapValues { (_, wallet) -> wallet.getBalances() })
         }
 
         post {
@@ -34,7 +30,7 @@ fun Route.walletRoutes() {
             val initialBalances = dto.initialBalances.mapKeys { (key, _) -> Asset(key) }
                 .mapValues { (_, value) -> BigDecimal(value) }
             val wallet = VirtualWallet(initialBalances)
-            mutableWallets[dto.walletName] = wallet
+            walletRegistry.register(dto.walletName, wallet)
             call.respond(HttpStatusCode.fromValue(201), "Wallet registered")
         }
     }

@@ -1,0 +1,36 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <!-- Логирование совершенных сделок в отдельный файл с ротацией -->
+    <appender name="TRADES" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/trades.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/trades.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Настройки логирования для модулей Ktor -->
+    <logger name="io.ktor" level="INFO"/>
+    <logger name="io.netty" level="INFO"/>
+    <logger name="org.eclipse.jetty" level="INFO"/>
+
+    <!-- Логирование нашего приложения (можно переключить на DEBUG или TRACE при необходимости) -->
+    <logger name="ru.jinushi.exchange" level="DEBUG"/>
+
+    <!-- Логирование сделок пойдет и в консоль (благодаря additivity="true"), и в файл trades.log -->
+    <logger name="Trades" level="INFO" additivity="true">
+        <appender-ref ref="TRADES"/>
+    </logger>
+</configuration>
