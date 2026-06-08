@@ -21,7 +21,7 @@ class Bybit(client: HttpClient) : AbstractExchangeClient(client) {
         get() = "wss://stream.bybit.com/v5/public/spot"
 
     override suspend fun WebSocketSession.subscribe(subscriptionEvent: String) {
-        val frame = Frame.Text("""{"op":"subscribe","args":["tickers.${subscriptionEvent}"]}""")
+        val frame = Frame.Text("""{"op":"subscribe","args":["orderbook.1.${subscriptionEvent}"]}""")
         send(frame)
     }
 
@@ -31,30 +31,37 @@ class Bybit(client: HttpClient) : AbstractExchangeClient(client) {
     }
 
     override fun parseTickerAndSymbol(jsonText: String): ParsedTicker? {
-        if (!jsonText.contains("\"data\"")) {
+        if (!jsonText.contains("orderbook.1.") || !jsonText.contains("\"data\"")) {
             return null
         }
 
-        val parsedDTO = jsonParser.decodeFromString<BybitBookTickerDto>(jsonText)
-        val data = parsedDTO.data
-        val ticker = Ticker(
-            exchange = this@Bybit,
-            bid = BigDecimal(data.bestBid),
-            ask = BigDecimal(data.bestAsk),
-            timestamp = Clock.System.now()
-        )
-        return ParsedTicker(ticker, data.symbol)
+        try {
+            val parsedDTO = jsonParser.decodeFromString<BybitOrderBookDto>(jsonText)
+            val data = parsedDTO.data ?: return null
+            val bestBid = data.bids.firstOrNull()?.firstOrNull() ?: return null
+            val bestAsk = data.asks.firstOrNull()?.firstOrNull() ?: return null
+            val ticker = Ticker(
+                exchange = this@Bybit,
+                bid = BigDecimal(bestBid),
+                ask = BigDecimal(bestAsk),
+                timestamp = Clock.System.now()
+            )
+            return ParsedTicker(ticker, data.symbol)
+        } catch (e: Exception) {
+            logger.error("Bybit parsing failed for JSON: {}", jsonText, e)
+            return null
+        }
     }
 }
 
 @Serializable
-private data class BybitBookTickerDto(
-    @SerialName("data") val data: BybitTickerDataDto
+private data class BybitOrderBookDto(
+    @SerialName("data") val data: BybitOrderBookDataDto? = null
 )
 
 @Serializable
-private data class BybitTickerDataDto(
-    @SerialName("symbol") val symbol: String,
-    @SerialName("bid1Price") val bestBid: String,
-    @SerialName("ask1Price") val bestAsk: String
+private data class BybitOrderBookDataDto(
+    @SerialName("s") val symbol: String,
+    @SerialName("b") val bids: List<List<String>>,
+    @SerialName("a") val asks: List<List<String>>
 )

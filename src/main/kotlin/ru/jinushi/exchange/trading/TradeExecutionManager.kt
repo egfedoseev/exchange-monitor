@@ -15,7 +15,7 @@ class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.Oppor
     private val logger: Logger = LoggerFactory.getLogger(TradeExecutionManager::class.java)
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    private val baseAmount = BigDecimal.valueOf(0.001)
+    private val baseAmount = BigDecimal.valueOf(0.00001) // TODO add dynamic trade amount
 
     fun startWorkers(workersCount: Int) {
         repeat(workersCount) { id ->

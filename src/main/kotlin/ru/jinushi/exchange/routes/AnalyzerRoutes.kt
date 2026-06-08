@@ -1,6 +1,10 @@
+@file:UseSerializers(BigDecimalSerializer::class)
+
 package ru.jinushi.exchange.routes
 
 import io.ktor.http.*
+import kotlinx.serialization.UseSerializers
+import ru.jinushi.exchange.serializers.BigDecimalSerializer
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*

@@ -124,6 +124,7 @@ class ConfigManager(
             }
         } catch (e: Exception) {
             logger.error("Failed to load configuration: {}", e.message, e)
+            throw RuntimeException("Failed to load configuration", e)
         }
     }
 
@@ -170,29 +171,27 @@ class ConfigManager(
         val defaultConfig = AppConfig(
             exchanges = listOf(
                 ExchangeConfig("Binance", "BINANCE"),
-                ExchangeConfig("Bybit", "BYBIT"),
-                ExchangeConfig("Binance-Sim", "VIRTUAL"),
-                ExchangeConfig("Bybit-Sim", "VIRTUAL")
+                ExchangeConfig("Bybit", "BYBIT")
             ),
             wallets = listOf(
                 WalletConfig(
                     "BinanceWallet-Sim", true, mapOf(
-                        "USD" to "10000.00",
+                        "USDT" to "10000.00",
                         "BTC" to "1.00000000"
                     ), "0.001"
                 ),
                 WalletConfig(
                     "BybitWallet-Sim", true, mapOf(
-                        "USD" to "10000.00",
+                        "USDT" to "10000.00",
                         "BTC" to "1.00000000"
                     ), "0.001"
                 )
             ),
             analyzers = listOf(
                 AnalyzerConfig(
-                    "USD/BTC", mapOf(
-                        "Binance-Sim" to "BinanceWallet-Sim",
-                        "Bybit-Sim" to "BybitWallet-Sim"
+                    "BTC/USDT", mapOf(
+                        "Binance" to "BinanceWallet-Sim",
+                        "Bybit" to "BybitWallet-Sim"
                     )
                 )
             )
@@ -206,6 +205,7 @@ class ConfigManager(
             loadAndInitialize()
         } catch (e: Exception) {
             logger.error("Failed to create default configuration: {}", e.message, e)
+            throw RuntimeException("Failed to create default configuration", e)
         }
     }
 }

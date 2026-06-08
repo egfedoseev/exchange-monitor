@@ -5,6 +5,7 @@ import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.Exchange
 import ru.jinushi.exchange.Ticker
 import ru.jinushi.exchange.wallet.Wallet
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
@@ -18,10 +19,12 @@ class ArbitrageAnalyzer(
     private val commandChannel: Channel<TradeEvent.OpportunityFound>,
     wallets: Map<Exchange, Wallet>
 ) : Closeable {
+    private val logger = LoggerFactory.getLogger(ArbitrageAnalyzer::class.java)
     private val latestPrices = ConcurrentHashMap<Exchange, Ticker>()
     val wallets = ConcurrentHashMap(wallets)
 
     fun processNewTicker(ticker: Ticker) {
+        logger.debug("Received ticker for {}: exchange={}, bid={}, ask={}", currencyPair.raw, ticker.exchange.name, ticker.bid, ticker.ask)
         latestPrices[ticker.exchange] = ticker
 
         val opportunity = calculateArbitrage(ticker) ?: return

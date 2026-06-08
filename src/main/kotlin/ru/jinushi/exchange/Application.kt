@@ -54,7 +54,7 @@ fun main() {
 
     embeddedServer(CIO, port = 8080) {
         install(ContentNegotiation) {
-            json()
+            json(ru.jinushi.exchange.serializers.jsonConfig)
         }
 
         monitor.subscribe(ApplicationStopping) {

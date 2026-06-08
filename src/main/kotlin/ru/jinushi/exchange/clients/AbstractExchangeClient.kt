@@ -38,13 +38,13 @@ abstract class AbstractExchangeClient(private val client: HttpClient) : Exchange
 
     private val flowChannels = ConcurrentHashMap<String, MutableSharedFlow<Ticker>>()
 
-    protected abstract val streamUrl: String
+    internal abstract val streamUrl: String
 
-    protected abstract suspend fun WebSocketSession.subscribe(subscriptionEvent: String)
+    internal abstract suspend fun WebSocketSession.subscribe(subscriptionEvent: String)
 
-    protected abstract suspend fun WebSocketSession.ping()
+    internal abstract suspend fun WebSocketSession.ping()
 
-    protected abstract fun parseTickerAndSymbol(jsonText: String): ParsedTicker?
+    internal abstract fun parseTickerAndSymbol(jsonText: String): ParsedTicker?
 
     private suspend fun runWebSocket() {
         client.webSocket(streamUrl) {
