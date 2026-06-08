@@ -44,6 +44,9 @@ paths:
                   additionalProperties:
                     type: string
                   example: { "USDT": "10000", "BTC": "0.5" }
+                feeRate:
+                  type: string
+                  example: "0.001"
       responses:
         '201':
           description: Wallet successfully registered
@@ -60,14 +63,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      example: "Binance"
-                    type:
-                      type: string
-                      example: "VIRTUAL"
+                  type: string
+                  example: "Binance"
 
   /analyzers:
     get:
@@ -94,10 +91,18 @@ paths:
               type: object
               required:
                 - currencyPair
+                - executionMappings
               properties:
                 currencyPair:
                   type: string
                   example: "BTC/USDT"
+                executionMappings:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example:
+                    Binance: "BinanceWallet-Sim"
+                    Bybit: "BybitWallet-Sim"
       responses:
         '200':
           description: Analyzer successfully started and streaming market data
@@ -128,10 +133,11 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  totalProfitUsd:
-                    type: string
-                    example: "154.23"
+                additionalProperties:
+                  type: string
+                example:
+                  USDT: "154.23"
+                  BTC: "0.005"
 
   /trades:
     get:
