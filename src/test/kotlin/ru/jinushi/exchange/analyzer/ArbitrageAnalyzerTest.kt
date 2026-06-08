@@ -5,6 +5,8 @@ import kotlinx.coroutines.test.runTest
 import ru.jinushi.exchange.CurrencyPair
 import ru.jinushi.exchange.Exchange
 import ru.jinushi.exchange.Ticker
+import ru.jinushi.exchange.trading.TradeOrder
+import ru.jinushi.exchange.wallet.Asset
 import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -20,9 +22,9 @@ class ArbitrageAnalyzerTest {
     }
 
     private class MockWallet : Wallet {
-        override suspend fun getBalance(asset: ru.jinushi.exchange.wallet.Asset) = BigDecimal.ZERO
-        override suspend fun executeTrade(order: ru.jinushi.exchange.trading.TradeOrder) = throw UnsupportedOperationException()
-        override suspend fun getBalances() = emptyMap<ru.jinushi.exchange.wallet.Asset, BigDecimal>()
+        override suspend fun getBalance(asset: Asset): BigDecimal = BigDecimal.ZERO
+        override suspend fun executeTrade(order: TradeOrder) = throw UnsupportedOperationException()
+        override suspend fun getBalances() = emptyMap<Asset, BigDecimal>()
     }
 
     @Test
@@ -86,4 +88,5 @@ class ArbitrageAnalyzerTest {
         val event = commandChannel.tryReceive().getOrNull()
         assertNull(event)
     }
+
 }
