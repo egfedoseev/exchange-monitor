@@ -30,7 +30,7 @@ fun Route.walletRoutes(walletRegistry: WalletRegistry, configManager: ConfigMana
 
             val initialBalances = dto.initialBalances.mapKeys { (key, _) -> Asset(key) }
                 .mapValues { (_, value) -> BigDecimal(value) }
-            val wallet = VirtualWallet(initialBalances)
+            val wallet = VirtualWallet(initialBalances, BigDecimal(dto.feeRate))
             walletRegistry.register(dto.walletName, wallet)
             configManager.saveCurrentState()
             call.respond(HttpStatusCode.fromValue(201), "Wallet registered")
@@ -42,5 +42,6 @@ fun Route.walletRoutes(walletRegistry: WalletRegistry, configManager: ConfigMana
 private data class CreateWalletDto(
     val walletName: String,
     val isVirtual: Boolean,
-    val initialBalances: Map<String, String> = emptyMap()
+    val initialBalances: Map<String, String> = emptyMap(),
+    val feeRate: String = "0.001"
 )

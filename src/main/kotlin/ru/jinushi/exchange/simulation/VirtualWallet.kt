@@ -11,12 +11,16 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.concurrent.ConcurrentHashMap
 
-class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
+class VirtualWallet(
+    initialBalances: Map<Asset, BigDecimal>,
+    val feeRate: BigDecimal = BigDecimal("0.001")
+) : Wallet {
     private val balances = ConcurrentHashMap(initialBalances)
     override suspend fun getBalances(): Map<Asset, BigDecimal> = balances
 
     private val assetLocks = ConcurrentHashMap<Asset, Mutex>()
 
+    private val multiplier = BigDecimal.ONE.subtract(feeRate)
     override suspend fun getBalance(asset: Asset): BigDecimal = balances.getOrDefault(asset, BigDecimal.ZERO)
 
     override suspend fun executeTrade(order: TradeOrder): TradeResult {
@@ -30,14 +34,14 @@ class VirtualWallet(initialBalances: Map<Asset, BigDecimal>) : Wallet {
                 spentAsset = order.quoteAsset
                 receivedAsset = order.asset
                 spentAmount = order.amount.multiply(order.targetPrice).roundForAsset(spentAsset)
-                receivedAmount = order.amount.roundForAsset(receivedAsset)
+                receivedAmount = order.amount.multiply(multiplier).roundForAsset(receivedAsset)
             }
 
             OrderType.SELL -> {
                 spentAsset = order.asset
                 receivedAsset = order.quoteAsset
                 spentAmount = order.amount.roundForAsset(spentAsset)
-                receivedAmount = order.amount.multiply(order.targetPrice).roundForAsset(receivedAsset)
+                receivedAmount = order.amount.multiply(order.targetPrice).multiply(multiplier).roundForAsset(receivedAsset)
             }
         }
 

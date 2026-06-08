@@ -41,7 +41,8 @@ data class ExchangeConfig(
 data class WalletConfig(
     val name: String,
     val isVirtual: Boolean,
-    val balances: Map<String, String> = emptyMap()
+    val balances: Map<String, String> = emptyMap(),
+    val feeRate: String = "0.001"
 )
 
 @Serializable
@@ -71,7 +72,6 @@ class ConfigManager(
             val tomlString = configFile.readText()
             val config = Toml.decodeFromString<AppConfig>(tomlString)
 
-            // 1. Initialize Exchanges
             config.exchanges.forEach { exchangeConfig ->
                 val exchange = when (exchangeConfig.type.uppercase()) {
                     "BINANCE" -> Binance(httpClient)
@@ -88,12 +88,11 @@ class ConfigManager(
                 }
             }
 
-            // 2. Initialize Wallets
             config.wallets.forEach { walletConfig ->
                 if (walletConfig.isVirtual) {
                     val initialBalances = walletConfig.balances.mapKeys { Asset(it.key) }
                         .mapValues { BigDecimal(it.value) }
-                    val wallet = VirtualWallet(initialBalances)
+                    val wallet = VirtualWallet(initialBalances, BigDecimal(walletConfig.feeRate))
                     walletRegistry.register(walletConfig.name, wallet)
                     logger.info("Loaded and registered wallet: {}", walletConfig.name)
                 } else {
@@ -101,7 +100,6 @@ class ConfigManager(
                 }
             }
 
-            // 3. Initialize Analyzers
             config.analyzers.forEach { analyzerConfig ->
                 val pair = CurrencyPair(analyzerConfig.currencyPair)
                 val exchangesMap = analyzerConfig.executionMappings
@@ -143,10 +141,11 @@ class ConfigManager(
 
             val walletsList = walletRegistry.getAll().map { (name, wallet) ->
                 val isVirtual = wallet is VirtualWallet
+                val feeRateStr = if (wallet is VirtualWallet) wallet.feeRate.toPlainString() else "0.0"
                 val balances = runBlocking {
                     wallet.getBalances().mapKeys { it.key.code }.mapValues { it.value.toPlainString() }
                 }
-                WalletConfig(name, isVirtual, balances)
+                WalletConfig(name, isVirtual, balances, feeRateStr)
             }
 
             val analyzersList = analyzerRegistry.getAll().map { (pair, analyzer) ->
@@ -180,13 +179,13 @@ class ConfigManager(
                     "BinanceWallet-Sim", true, mapOf(
                         "USD" to "10000.00",
                         "BTC" to "1.00000000"
-                    )
+                    ), "0.001"
                 ),
                 WalletConfig(
                     "BybitWallet-Sim", true, mapOf(
                         "USD" to "10000.00",
                         "BTC" to "1.00000000"
-                    )
+                    ), "0.001"
                 )
             ),
             analyzers = listOf(
