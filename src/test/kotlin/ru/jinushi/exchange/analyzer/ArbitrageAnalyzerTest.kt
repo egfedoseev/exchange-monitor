@@ -22,9 +22,12 @@ class ArbitrageAnalyzerTest {
     }
 
     private class MockWallet : Wallet {
+        override val id: String = "mock-wallet"
+        override val blockchain: String = "mock-blockchain"
         override suspend fun getBalance(asset: Asset): BigDecimal = BigDecimal.ZERO
         override suspend fun executeTrade(order: TradeOrder) = throw UnsupportedOperationException()
         override suspend fun getBalances() = emptyMap<Asset, BigDecimal>()
+        override suspend fun sendMoney(asset: Asset, amount: BigDecimal, to: Wallet): Boolean = false
     }
 
     @Test

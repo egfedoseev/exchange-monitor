@@ -47,6 +47,20 @@ paths:
                 feeRate:
                   type: string
                   example: "0.001"
+                blockchain:
+                  type: string
+                  example: "Ethereum"
+                  default: "Simulated"
+                minimalLimits:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example: { "USDT": "10", "BTC": "0.0001" }
+                transferFees:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example: { "USDT": "1.5", "BTC": "0.00005" }
       responses:
         '201':
           description: Wallet successfully registered

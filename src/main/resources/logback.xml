@@ -27,10 +27,10 @@
     <logger name="org.eclipse.jetty" level="INFO"/>
 
     <!-- Логирование нашего приложения (можно переключить на DEBUG или TRACE при необходимости) -->
-    <logger name="ru.jinushi.exchange" level="DEBUG"/>
+    <logger name="ru.jinushi.exchange" level="WARN"/>
 
     <!-- Логирование сделок пойдет и в консоль (благодаря additivity="true"), и в файл trades.log -->
-    <logger name="Trades" level="INFO" additivity="true">
+    <logger name="Trades" level="WARN" additivity="true">
         <appender-ref ref="TRADES"/>
     </logger>
 </configuration>

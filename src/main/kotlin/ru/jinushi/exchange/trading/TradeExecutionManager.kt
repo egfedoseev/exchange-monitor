@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory
 import ru.jinushi.exchange.accounting.ExecutedTrade
 import ru.jinushi.exchange.accounting.ProfitTracker
 import ru.jinushi.exchange.analyzer.TradeEvent
+import ru.jinushi.exchange.wallet.Asset
+import ru.jinushi.exchange.wallet.Wallet
 import java.math.BigDecimal
 
 class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.OpportunityFound>) {
@@ -33,6 +35,30 @@ class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.Oppor
         logger.info("Successfully started {} workers", workersCount)
     }
 
+    private suspend fun balanceWallets(fromWallet: Wallet, toWallet: Wallet, asset: Asset) {
+        val initialFromBalance = fromWallet.getBalance(asset)
+        val initialToBalance = toWallet.getBalance(asset)
+        val amountToTransfer = initialFromBalance.multiply(BigDecimal("0.5"))
+
+        logger.info(
+            "Attempting to balance wallets for asset {}. Transferring {} from {} (balance: {}) to {} (balance: {})",
+            asset.code, amountToTransfer, fromWallet.id, initialFromBalance, toWallet.id, initialToBalance
+        )
+
+        val success = fromWallet.sendMoney(asset, amountToTransfer, toWallet)
+        if (success) {
+            logger.info(
+                "Successfully balanced wallets for asset {}. New balance of {}: {}, new balance of {}: {}",
+                asset.code, fromWallet.id, fromWallet.getBalance(asset), toWallet.id, toWallet.getBalance(asset)
+            )
+        } else {
+            logger.warn(
+                "Failed to balance wallets for asset {}. Transfer of {} from {} to {} was rejected.",
+                asset.code, amountToTransfer, fromWallet.id, toWallet.id
+            )
+        }
+    }
+
     private suspend fun executeTradeSafely(event: TradeEvent.OpportunityFound) {
         val (currencyPair, buyTicker, sellTicker, buyWallet, sellWallet) = event
 
@@ -48,6 +74,11 @@ class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.Oppor
             )
         )
         val sellResult = when (buyResult) {
+            is TradeResult.Failed.NotEnoughMoney -> {
+                balanceWallets(sellWallet, buyWallet, currencyPair.quoteAsset)
+                return
+            }
+
             is TradeResult.Failed -> {
                 logger.warn("Leg 1 (BUY) failed: {}", buyResult.reason)
                 return
@@ -66,9 +97,17 @@ class TradeExecutionManager(private val commandChannel: Channel<TradeEvent.Oppor
         }
 
         when (sellResult) {
+            is TradeResult.Failed.NotEnoughMoney -> {
+                logger.error(
+                    "CRITICAL: Leg 1 (BUY) succeeded (amount: {}), but Leg 2 (SELL) FAILED. Wallet balances are out of sync!",
+                    buyResult.actualAmount
+                )
+                balanceWallets(buyWallet, sellWallet, currencyPair.baseAsset)
+            }
+
             is TradeResult.Failed -> {
                 logger.error(
-                    "CRITICAL: Leg 1 (BUY) succeeded (amount: {}), but Leg 2 (SELL) FAILED: {}. Wallet balances are out of sync!",
+                    "Leg 1 (BUY) succeeded (amount: {}), but Leg 2 (SELL) FAILED: {}",
                     buyResult.actualAmount, sellResult.reason
                 )
             }

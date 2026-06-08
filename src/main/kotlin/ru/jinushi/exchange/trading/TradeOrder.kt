@@ -20,5 +20,8 @@ sealed interface TradeResult {
         val actualAmount: BigDecimal
     ) : TradeResult
 
-    data class Failed(val reason: String) : TradeResult
+    sealed class Failed(val reason: String) : TradeResult {
+        class NotEnoughMoney(has: BigDecimal, needs: BigDecimal, asset: Asset) :
+            Failed("Not enough money in asset $asset. Has $has, needs $needs")
+    }
 }

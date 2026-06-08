@@ -42,7 +42,10 @@ data class WalletConfig(
     val name: String,
     val isVirtual: Boolean,
     val balances: Map<String, String> = emptyMap(),
-    val feeRate: String = "0.001"
+    val feeRate: String = "0.001",
+    val blockchain: String = "Simulated",
+    val minimalLimits: Map<String, String> = emptyMap(),
+    val transferFees: Map<String, String> = emptyMap()
 )
 
 @Serializable
@@ -92,7 +95,18 @@ class ConfigManager(
                 if (walletConfig.isVirtual) {
                     val initialBalances = walletConfig.balances.mapKeys { Asset(it.key) }
                         .mapValues { BigDecimal(it.value) }
-                    val wallet = VirtualWallet(initialBalances, BigDecimal(walletConfig.feeRate))
+                    val minimalLimits = walletConfig.minimalLimits.mapKeys { Asset(it.key) }
+                        .mapValues { BigDecimal(it.value) }
+                    val transferFees = walletConfig.transferFees.mapKeys { Asset(it.key) }
+                        .mapValues { BigDecimal(it.value) }
+                    val wallet = VirtualWallet(
+                        initialBalances = initialBalances,
+                        tradeFeeRate = BigDecimal(walletConfig.feeRate),
+                        blockchain = walletConfig.blockchain,
+                        id = walletConfig.name,
+                        minimalLimits = minimalLimits,
+                        transferFees = transferFees
+                    )
                     walletRegistry.register(walletConfig.name, wallet)
                     logger.info("Loaded and registered wallet: {}", walletConfig.name)
                 } else {
@@ -142,11 +156,26 @@ class ConfigManager(
 
             val walletsList = walletRegistry.getAll().map { (name, wallet) ->
                 val isVirtual = wallet is VirtualWallet
-                val feeRateStr = if (wallet is VirtualWallet) wallet.feeRate.toPlainString() else "0.0"
+                val feeRateStr = if (wallet is VirtualWallet) wallet.tradeFeeRate.toPlainString() else "0.0"
+                val blockchain = if (wallet is VirtualWallet) wallet.blockchain else "Simulated"
+                val minimalLimits = if (wallet is VirtualWallet) {
+                    wallet.minimalLimits.mapKeys { it.key.code }.mapValues { it.value.toPlainString() }
+                } else emptyMap()
+                val transferFees = if (wallet is VirtualWallet) {
+                    wallet.transferFees.mapKeys { it.key.code }.mapValues { it.value.toPlainString() }
+                } else emptyMap()
                 val balances = runBlocking {
                     wallet.getBalances().mapKeys { it.key.code }.mapValues { it.value.toPlainString() }
                 }
-                WalletConfig(name, isVirtual, balances, feeRateStr)
+                WalletConfig(
+                    name = name,
+                    isVirtual = isVirtual,
+                    balances = balances,
+                    feeRate = feeRateStr,
+                    blockchain = blockchain,
+                    minimalLimits = minimalLimits,
+                    transferFees = transferFees
+                )
             }
 
             val analyzersList = analyzerRegistry.getAll().map { (pair, analyzer) ->

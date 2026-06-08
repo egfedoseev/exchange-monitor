@@ -29,7 +29,14 @@ object AssetSerializer : KSerializer<Asset> {
 }
 
 interface Wallet {
+    val id: String
+    val blockchain: String
+
     suspend fun getBalance(asset: Asset): BigDecimal
+
     suspend fun executeTrade(order: TradeOrder): TradeResult
+
     suspend fun getBalances(): Map<Asset, BigDecimal>
+
+    suspend fun sendMoney(asset: Asset, amount: BigDecimal, to: Wallet): Boolean
 }
